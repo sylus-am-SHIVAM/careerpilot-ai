@@ -1,4 +1,7 @@
-from app.utils.security import hash_password
+from app.schemas.login import LoginRequest
+from app.utils.security import verify_password, create_access_token, hash_password
+
+# from app.utils.security import hash_password 
 from sqlalchemy.orm import Session
 
 from app.models.user import User
@@ -58,3 +61,19 @@ def delete_user(db: Session, user_id: int):
         db.commit()
 
     return db_user
+
+def login_user(db, login_data: LoginRequest):
+    user = db.query(User).filter(User.email == login_data.email).first()
+
+    if not user:
+        return None
+
+    if not verify_password(login_data.password, user.password):
+        return None
+
+    token = create_access_token({"sub": user.email})
+
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }
