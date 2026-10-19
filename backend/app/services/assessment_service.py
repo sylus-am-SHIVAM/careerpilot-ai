@@ -1,3 +1,5 @@
+from fastapi import HTTPException
+from sqlalchemy import distinct, func
 from sqlalchemy.orm import Session
 
 # from app.models.assessment import Assessment, Question, Option
@@ -76,18 +78,65 @@ def get_questions(
     )
 
 
+def get_assessment(db: Session, assessment_id: int):
+    return (
+        db.query(Assessment)
+        .filter(Assessment.id == assessment_id)
+        .first()
+    )
+
+
 def create_user_answer(
     db: Session,
     user_id: int,
     answer: UserAnswerCreate
 ):
-    db_answer = UserAnswer(
-        user_id=user_id,
-        question_id=answer.question_id,
-        option_id=answer.option_id
+    question = (
+        db.query(Question)
+        .filter(Question.id == answer.question_id)
+        .first()
     )
 
-    db.add(db_answer)
+    if not question:
+        raise HTTPException(
+            status_code=404,
+            detail="Question not found"
+        )
+
+    option = (
+        db.query(Option)
+        .filter(
+            Option.id == answer.option_id,
+            Option.question_id == answer.question_id
+        )
+        .first()
+    )
+
+    if not option:
+        raise HTTPException(
+            status_code=400,
+            detail="Option does not belong to this question"
+        )
+
+    db_answer = (
+        db.query(UserAnswer)
+        .filter(
+            UserAnswer.user_id == user_id,
+            UserAnswer.question_id == answer.question_id
+        )
+        .first()
+    )
+
+    if db_answer:
+        db_answer.option_id = answer.option_id
+    else:
+        db_answer = UserAnswer(
+            user_id=user_id,
+            question_id=answer.question_id,
+            option_id=answer.option_id
+        )
+        db.add(db_answer)
+
     db.commit()
     db.refresh(db_answer)
 
@@ -115,7 +164,7 @@ def get_assessment_result(
     )
 
     answered_questions = (
-        db.query(UserAnswer)
+        db.query(func.count(distinct(UserAnswer.question_id)))
         .join(
             Question,
             UserAnswer.question_id == Question.id
@@ -124,7 +173,7 @@ def get_assessment_result(
             UserAnswer.user_id == user_id,
             Question.assessment_id == assessment_id
         )
-        .count()
+        .scalar()
     )
 
     completion_percentage = (

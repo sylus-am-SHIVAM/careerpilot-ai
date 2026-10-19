@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.models.user import User
+from app.utils.security import get_current_user
 from app.schemas.assessment import (
     AssessmentCreate,
     AssessmentResponse,
@@ -19,6 +21,7 @@ from app.schemas.assessment import (
 from app.services.assessment_service import (
     create_assessment,
     get_assessments,
+    get_assessment,
     create_question,
     get_questions,
     create_user_answer,
@@ -77,6 +80,12 @@ def get_all_questions(
     assessment_id: int,
     db: Session = Depends(get_db)
 ):
+    if not get_assessment(db, assessment_id):
+        raise HTTPException(
+            status_code=404,
+            detail="Assessment not found"
+        )
+
     return get_questions(
         db,
         assessment_id
@@ -86,13 +95,12 @@ def get_all_questions(
 @router.post("/answers", response_model=UserAnswerResponse)
 def submit_answer(
     answer: UserAnswerCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    user_id = 6
-
     return create_user_answer(
         db,
-        user_id,
+        current_user.id,
         answer
     )
 
@@ -103,14 +111,13 @@ def submit_answer(
 )
 def get_result(
     assessment_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    user_id = 6
-
     result = get_assessment_result(
         db,
         assessment_id,
-        user_id
+        current_user.id
     )
 
     if result is None:

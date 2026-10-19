@@ -20,6 +20,7 @@ from app.services.user_service import (
     create_user,
     get_users,
     get_user,
+    get_user_by_email,
     update_user,
     delete_user,
     login_user,
@@ -45,6 +46,12 @@ def create_new_user(
     user: UserCreate,
     db: Session = Depends(get_db)
 ):
+    if get_user_by_email(db, user.email):
+        raise HTTPException(
+            status_code=400,
+            detail="Email already registered"
+        )
+
     return create_user(db, user)
 
 
@@ -68,7 +75,20 @@ def get_single_user(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    return get_user(db, user_id)
+    db_user = get_user(db, user_id)
+
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return db_user
+
+
+def check_own_account(user_id: int, current_user):
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only modify your own account"
+        )
 
 
 @router.put("/users/{user_id}", response_model=UserResponse)
@@ -78,6 +98,15 @@ def update_existing_user(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
+    check_own_account(user_id, current_user)
+
+    existing = get_user_by_email(db, user.email)
+    if existing and existing.id != user_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Email already registered"
+        )
+
     return update_user(db, user_id, user)
 
 
@@ -87,6 +116,7 @@ def delete_existing_user(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
+    check_own_account(user_id, current_user)
     delete_user(db, user_id)
     return {"message": "User deleted successfully"}
 
