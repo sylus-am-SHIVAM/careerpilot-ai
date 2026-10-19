@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from app.api.routes import router
+from app.api.assessment_routes import router as assessment_router
 from app.database.database import engine, Base
 from app.models.user import User
+from app.models.assessment import Assessment, Question, Option, UserAnswer
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -15,3 +17,4 @@ app = FastAPI(
 )
 
 app.include_router(router)
+app.include_router(assessment_router)
