@@ -67,3 +67,4 @@ htmlcov/
 # ==========================
 .ipynb_checkpoints/
 backend/chroma_db/
+backend/uploads/

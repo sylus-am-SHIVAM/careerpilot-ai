@@ -10,6 +10,7 @@ from app.schemas.career_plan import (
     SkillGapRequest
 )
 from app.services.mentor_service import get_user_career_profile, retrieve_context
+from app.services.resume_service import get_resume
 from app.utils.llm import generate_json
 
 PLANNER_PROMPT = """You are CareerPilot AI, an expert career planner for students in India.
@@ -78,6 +79,10 @@ def get_roadmap(db: Session, roadmap_id: int, user_id: int):
 
 def analyze_skill_gap(db: Session, user: User, request: SkillGapRequest):
     skills = [s.strip() for s in request.current_skills if s.strip()]
+    if not skills:
+        resume = get_resume(db, user.id)
+        if resume:
+            skills = resume.analysis.get("extracted_skills", [])
 
     prompt = f"""Analyse the skill gap for this student.
 Target role: {request.target_role}

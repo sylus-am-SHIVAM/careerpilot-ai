@@ -6,6 +6,7 @@ from app.models.chat import ChatMessage
 from app.models.user import User
 from app.services.career_service import get_recommendation
 from app.services.rag_service import search_knowledge
+from app.services.resume_service import get_resume
 from app.utils.llm import generate_text
 
 HISTORY_LIMIT = 10
@@ -36,6 +37,15 @@ def get_user_career_profile(db: Session, user: User):
         top = ", ".join(c["name"] for c in result["top_categories"])
         scores = ", ".join(f'{s["name"]} {s["percentage"]}%' for s in result["scores"])
         lines.append(f"Assessment {assessment_id}: best fit {top} (scores: {scores})")
+
+    resume = get_resume(db, user.id)
+    if resume:
+        analysis = resume.analysis
+        lines.append(
+            f"Resume ({analysis.get('experience_level')}): "
+            f"skills {', '.join(analysis.get('extracted_skills', []))}; "
+            f"summary: {analysis.get('summary')}"
+        )
 
     return "\n".join(lines)
 
