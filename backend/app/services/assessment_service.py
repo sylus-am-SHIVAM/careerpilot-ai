@@ -189,3 +189,18 @@ def get_assessment_result(
         "answered_questions": answered_questions,
         "completion_percentage": completion_percentage
     }
+
+def get_user_answers(
+    db: Session,
+    assessment_id: int,
+    user_id: int
+):
+    return (
+        db.query(UserAnswer)
+        .join(Question, UserAnswer.question_id == Question.id)
+        .filter(
+            UserAnswer.user_id == user_id,
+            Question.assessment_id == assessment_id
+        )
+        .all()
+    )

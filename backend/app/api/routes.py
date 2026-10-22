@@ -41,6 +41,11 @@ def health():
     return {
         "status": "healthy"
     }
+@router.get("/me", response_model=UserResponse)
+def read_current_user(current_user = Depends(get_current_user)):
+    return current_user
+
+
 @router.post("/users", response_model=UserResponse)
 def create_new_user(
     user: UserCreate,

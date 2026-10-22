@@ -27,7 +27,8 @@ from app.services.assessment_service import (
     create_question,
     get_questions,
     create_user_answer,
-    get_assessment_result
+    get_assessment_result,
+    get_user_answers
 )
 
 router = APIRouter(
@@ -104,6 +105,22 @@ def submit_answer(
         db,
         current_user.id,
         answer
+    )
+
+
+@router.get(
+    "/{assessment_id}/answers",
+    response_model=list[UserAnswerResponse]
+)
+def get_my_answers(
+    assessment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    return get_user_answers(
+        db,
+        assessment_id,
+        current_user.id
     )
 
 
