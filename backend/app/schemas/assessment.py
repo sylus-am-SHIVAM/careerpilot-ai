@@ -40,6 +40,7 @@ class QuestionCreate(QuestionBase):
 class QuestionResponse(QuestionBase):
     id: int
     assessment_id: int
+    section: Optional[str] = None
     options: list[OptionResponse]
 
     model_config = ConfigDict(from_attributes=True)
@@ -81,10 +82,26 @@ class CategoryScore(BaseModel):
     percentage: float
 
 
+class SectionResult(BaseModel):
+    key: str
+    name: str
+    answered: int
+    top_category: Optional[str] = None
+
+
+class CareerMatch(BaseModel):
+    name: str
+    category: str
+    fit: int
+
+
 class RecommendationResponse(BaseModel):
     assessment_id: int
     user_id: int
     answered_questions: int
     total_questions: int
+    match_strength: str
     top_categories: list[CareerCategory]
     scores: list[CategoryScore]
+    sections: list[SectionResult]
+    career_matches: list[CareerMatch]

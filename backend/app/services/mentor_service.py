@@ -37,7 +37,11 @@ def get_user_career_profile(db: Session, user: User):
             continue
         top = ", ".join(c["name"] for c in result["top_categories"])
         scores = ", ".join(f'{s["name"]} {s["percentage"]}%' for s in result["scores"])
-        lines.append(f"Assessment {assessment_id}: best fit {top} (scores: {scores})")
+        careers = ", ".join(m["name"] for m in result["career_matches"][:4])
+        lines.append(
+            f"Assessment {assessment_id}: best fit {top} (scores: {scores}); "
+            f"top career matches: {careers}"
+        )
 
     resume = get_resume(db, user.id)
     if resume:

@@ -34,9 +34,15 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
 
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-16">
-      <Card className="w-full max-w-sm">
-        <Link href="/" className="text-sm font-semibold text-indigo-600">CareerPilot AI</Link>
-        <h1 className="mt-2 text-xl font-semibold text-slate-900">{isLogin ? "Welcome back" : "Create your account"}</h1>
+      <Card className="w-full max-w-sm p-7 shadow-xl shadow-indigo-100 animate-fade-up">
+        <Link href="/" className="flex items-center gap-2 text-sm font-bold text-slate-900">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-500">🚀</span>
+          CareerPilot AI
+        </Link>
+        <h1 className="mt-5 text-2xl font-bold text-slate-900">{isLogin ? "Welcome back 👋" : "Start your journey ✨"}</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          {isLogin ? "Log in to continue your career plan." : "Create a free account to discover your best-fit career."}
+        </p>
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           {!isLogin && (
             <div>

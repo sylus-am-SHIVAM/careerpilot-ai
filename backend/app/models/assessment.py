@@ -36,6 +36,7 @@ class Question(Base):
     options = relationship(
         "Option",
         back_populates="question",
+        order_by="Option.id",
         cascade="all, delete-orphan"
     )
 

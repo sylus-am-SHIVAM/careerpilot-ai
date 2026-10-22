@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Card, ErrorBox, Input, Label, List, PageHeader, Spinner, Tag } from "@/components/ui";
+import { AiLoader, Button, Card, EmptyState, ErrorBox, Input, Label, List, PageHeader, Spinner, Tag } from "@/components/ui";
 import { api, type Roadmap } from "@/lib/api";
 
 export default function RoadmapPage() {
@@ -46,7 +46,7 @@ export default function RoadmapPage() {
 
   return (
     <>
-      <PageHeader title="Learning Roadmap" subtitle="Generate a week-by-week plan for any career goal." />
+      <PageHeader icon="🛣️" title="Learning Roadmap" subtitle="Generate a week-by-week plan for any career goal." />
 
       <Card>
         <form onSubmit={generate} className="grid gap-4 sm:grid-cols-2">
@@ -59,7 +59,7 @@ export default function RoadmapPage() {
             <select
               value={level}
               onChange={(e) => setLevel(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
             >
               <option value="beginner">Beginner</option>
               <option value="intermediate">Intermediate</option>
@@ -79,13 +79,19 @@ export default function RoadmapPage() {
           <div className="sm:col-span-2">
             <ErrorBox message={error} />
             <Button type="submit" disabled={generating} className="mt-2">
-              {generating ? "Generating (can take ~30s)..." : "Generate roadmap"}
+              {generating ? "Generating..." : "✨ Generate roadmap"}
             </Button>
           </div>
         </form>
       </Card>
 
+      {generating && <div className="mt-6"><AiLoader title="Building your personalised roadmap" /></div>}
       {loading && <div className="mt-6"><Spinner /></div>}
+      {!loading && !generating && roadmaps.length === 0 && (
+        <div className="mt-6">
+          <EmptyState icon="🗺️" title="No roadmap yet" text="Enter a goal like “Become a Data Scientist” and get a week-by-week plan." />
+        </div>
+      )}
 
       {roadmaps.length > 1 && (
         <div className="mt-6 flex flex-wrap gap-2">
@@ -94,7 +100,7 @@ export default function RoadmapPage() {
               key={r.id}
               onClick={() => setSelected(r)}
               className={`rounded-full border px-3 py-1 text-sm ${
-                selected?.id === r.id ? "border-indigo-600 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-600"
+                selected?.id === r.id ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:border-indigo-300"
               }`}
             >
               {r.goal}
@@ -105,12 +111,17 @@ export default function RoadmapPage() {
 
       {selected && (
         <div className="mt-6 space-y-4">
-          <Card>
-            <h2 className="text-lg font-semibold text-slate-900">{selected.content.title}</h2>
-            <p className="mt-2 text-sm text-slate-600">{selected.content.summary}</p>
-          </Card>
+          <div className="rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 p-6 text-white shadow-lg shadow-indigo-200 animate-fade-up">
+            <p className="text-sm text-white/80">🗺️ Your roadmap · {selected.content.phases.length} phases</p>
+            <h2 className="mt-1 text-2xl font-bold">{selected.content.title}</h2>
+            <p className="mt-2 text-sm text-white/85">{selected.content.summary}</p>
+          </div>
+          <div className="relative space-y-4 border-l-2 border-dashed border-indigo-200 pl-6 md:ml-4">
           {selected.content.phases.map((phase, i) => (
-            <Card key={i}>
+            <Card key={i} className="relative animate-fade-up">
+              <span className="absolute -left-[42px] top-5 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-sm font-bold text-white shadow ring-4 ring-white">
+                {i + 1}
+              </span>
               <div className="flex flex-wrap items-center gap-2">
                 <Tag tone="indigo">{phase.weeks}</Tag>
                 <h3 className="font-semibold text-slate-900">{phase.title}</h3>
@@ -130,15 +141,16 @@ export default function RoadmapPage() {
                   <Tag key={s}>{s}</Tag>
                 ))}
               </div>
-              <div className="mt-4 rounded-lg bg-green-50 p-3 text-sm text-green-800">
-                <span className="font-semibold">Project: </span>
+              <div className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800 ring-1 ring-emerald-100">
+                <span className="font-semibold">🛠️ Project: </span>
                 {phase.project}
               </div>
             </Card>
           ))}
-          <Card>
+          </div>
+          <Card className="bg-gradient-to-r from-emerald-50 to-teal-50">
             <p className="text-sm text-slate-700">
-              <span className="font-semibold">Final outcome: </span>
+              <span className="font-semibold">🏁 Final outcome: </span>
               {selected.content.final_outcome}
             </p>
           </Card>

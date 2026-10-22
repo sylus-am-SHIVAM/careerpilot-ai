@@ -9,7 +9,7 @@ An AI-powered career guidance platform for students. It recommends career paths 
 | Feature | What it does |
 |---|---|
 | 🔐 Authentication | Register / login with bcrypt-hashed passwords and JWT tokens |
-| 🎯 Career assessment | 5-question interest assessment scored into 5 career categories with example careers |
+| 🎯 Career assessment | 20-question assessment across 5 parameters (interests, strengths, work style, values, academics) with weighted scoring, match strength, per-parameter insights and ranked career matches |
 | 🤖 AI mentor (RAG) | Gemini-powered chat that retrieves relevant career knowledge from ChromaDB, knows the student's assessment and resume, remembers the conversation and shows its sources |
 | 🛣️ Learning roadmap | Week-by-week plan (phases, goals, skills, resources, projects) for any goal |
 | 📈 Skill gap analysis | Readiness score, matching skills and prioritised missing skills for a target role (can reuse resume skills) |
@@ -146,7 +146,14 @@ docs/                    early design notes
 
 ## 🧠 How the career scoring works
 
-Every assessment option adds 1 point to one or more categories (Technology & Engineering, Science & Research, Social/Teaching/Healthcare, Creative Arts & Design, Business & Management). The category with the most points is the recommendation, and each category's percentage is its share of all points. Rules live in `backend/app/data/career_assessment.py`.
+The Career Discovery Assessment has 20 questions in 5 parameters: Interests, Strengths & Aptitude, Work Style & Personality, Values & Motivation, and Academics & Experience. Every option gives weighted points (2 = strong signal, 1 = secondary signal) to one or more of 5 categories (Technology & Engineering, Science & Research, Social/Teaching/Healthcare, Creative Arts & Design, Business & Management).
+
+- **Category %** = category points / all points.
+- **Match strength** = lead of the top category over the second (≥15 points strong, ≥6 good, otherwise a mixed profile).
+- **Per-parameter insight** = the leading category inside each of the 5 parameters.
+- **Career matches** = 24 careers, each described as a blend of categories (e.g. UI/UX Designer = 60% creative + 40% technology), ranked against the student's profile.
+
+Rules live in `backend/app/data/career_assessment.py` and `backend/app/services/career_service.py`. The older 5-question assessment is kept so earlier answers still score.
 
 ---
 

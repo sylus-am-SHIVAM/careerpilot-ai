@@ -1,5 +1,7 @@
 from conftest import register
 
+from app.data.career_assessment import QUESTIONS
+
 
 def questions(client):
     return client.get("/api/v1/assessments/1/questions").json()
@@ -13,10 +15,23 @@ def answer(client, headers, question, option_index):
     )
 
 
+def answer_text(client, headers, question, text):
+    option = next(o for o in question["options"] if o["option_text"] == text)
+    return client.post(
+        "/api/v1/assessments/answers",
+        json={"question_id": question["id"], "option_id": option["id"]},
+        headers=headers,
+    )
+
+
 def test_seeded_assessment(client):
     qs = questions(client)
-    assert len(qs) == 5
-    assert all(len(q["options"]) == 4 for q in qs)
+    assert len(qs) == 20
+    assert all(len(q["options"]) == 5 for q in qs)
+    assert {q["section"] for q in qs} == {
+        "Interests", "Strengths & Aptitude", "Work Style & Personality",
+        "Values & Motivation", "Academics & Experience",
+    }
 
 
 def test_questions_for_missing_assessment(client):
@@ -46,22 +61,38 @@ def test_reanswer_updates_instead_of_duplicating(client, auth):
 
     result = client.get("/api/v1/assessments/1/result", headers=headers).json()
     assert result["answered_questions"] == 1
-    assert result["completion_percentage"] == 20
+    assert result["completion_percentage"] == 5
 
 
 def test_recommendation_scores(client, auth):
     _, headers = auth
     assert client.get("/api/v1/assessments/1/recommendation", headers=headers).status_code == 400
 
-    # creative, independent (technology + research), maths/tech, building, technical problem
-    for q, index in zip(questions(client), [2, 0, 0, 0, 0]):
-        answer(client, headers, q, index)
+    # first option of every question is the technology one, except two research-heavy ones
+    for q, item in zip(questions(client), QUESTIONS):
+        answer_text(client, headers, q, item["options"][0][0])
 
     data = client.get("/api/v1/assessments/1/recommendation", headers=headers).json()
     scores = {s["key"]: s["score"] for s in data["scores"]}
-    assert scores == {"technology": 4, "research": 1, "creative": 1, "social": 0, "business": 0}
+    assert scores == {"technology": 38, "research": 6, "creative": 0, "social": 0, "business": 1}
     assert [c["key"] for c in data["top_categories"]] == ["technology"]
-    assert data["answered_questions"] == 5
+    assert data["answered_questions"] == 20
+    assert data["match_strength"] == "strong"
+    assert data["career_matches"][0] == {
+        "name": "Software Engineer", "category": "Technology & Engineering", "fit": 100
+    }
+    assert len(data["sections"]) == 5
+    assert all(s["answered"] == 4 for s in data["sections"])
+    assert {s["top_category"] for s in data["sections"]} == {"Technology & Engineering"}
+
+
+def test_mixed_answers_give_mixed_profile(client, auth):
+    _, headers = auth
+    for i, (q, item) in enumerate(zip(questions(client), QUESTIONS)):
+        answer_text(client, headers, q, item["options"][i % 5][0])
+
+    data = client.get("/api/v1/assessments/1/recommendation", headers=headers).json()
+    assert data["match_strength"] == "mixed"
 
 
 def test_answers_are_per_user(client, auth):

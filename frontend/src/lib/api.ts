@@ -65,7 +65,13 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
 export type User = { id: number; full_name: string; email: string };
 
 export type Option = { id: number; option_text: string };
-export type Question = { id: number; assessment_id: number; question_text: string; options: Option[] };
+export type Question = {
+  id: number;
+  assessment_id: number;
+  question_text: string;
+  section: string | null;
+  options: Option[];
+};
 export type Assessment = { id: number; title: string; description: string | null };
 export type AssessmentResult = {
   assessment_id: number;
@@ -76,12 +82,17 @@ export type AssessmentResult = {
 };
 export type CareerCategory = { key: string; name: string; description: string; careers: string[] };
 export type CategoryScore = { key: string; name: string; score: number; percentage: number };
+export type SectionResult = { key: string; name: string; answered: number; top_category: string | null };
+export type CareerMatch = { name: string; category: string; fit: number };
 export type Recommendation = {
   assessment_id: number;
   answered_questions: number;
   total_questions: number;
+  match_strength: "strong" | "moderate" | "mixed";
   top_categories: CareerCategory[];
   scores: CategoryScore[];
+  sections: SectionResult[];
+  career_matches: CareerMatch[];
 };
 export type UserAnswer = { id: number; question_id: number; option_id: number };
 

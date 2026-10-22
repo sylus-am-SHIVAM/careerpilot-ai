@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy import distinct, func
 from sqlalchemy.orm import Session
 
-# from app.models.assessment import Assessment, Question, Option
+from app.data.career_assessment import QUESTION_SECTIONS, SECTIONS
 from app.models.assessment import (
     Assessment,
     Question,
@@ -32,7 +32,7 @@ def create_assessment(db: Session, assessment: AssessmentCreate):
 
 
 def get_assessments(db: Session):
-    return db.query(Assessment).all()
+    return db.query(Assessment).order_by(Assessment.id.desc()).all()
 def create_question(
     db: Session,
     assessment_id: int,
@@ -71,11 +71,23 @@ def get_questions(
     db: Session,
     assessment_id: int
 ):
-    return (
+    questions = (
         db.query(Question)
         .filter(Question.assessment_id == assessment_id)
+        .order_by(Question.id)
         .all()
     )
+
+    return [
+        {
+            "id": question.id,
+            "assessment_id": question.assessment_id,
+            "question_text": question.question_text,
+            "section": SECTIONS.get(QUESTION_SECTIONS.get(question.question_text)),
+            "options": question.options,
+        }
+        for question in questions
+    ]
 
 
 def get_assessment(db: Session, assessment_id: int):

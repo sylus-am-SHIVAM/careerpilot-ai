@@ -1,3 +1,5 @@
+import random
+
 from app.data.career_assessment import (
     ASSESSMENT_DESCRIPTION,
     ASSESSMENT_TITLE,
@@ -16,9 +18,11 @@ def seed_assessment():
             return
 
         assessment = Assessment(title=ASSESSMENT_TITLE, description=ASSESSMENT_DESCRIPTION)
-        for item in QUESTIONS:
+        for index, item in enumerate(QUESTIONS):
+            options = [text for text, _ in item["options"]]
+            random.Random(index).shuffle(options)
             question = Question(question_text=item["text"])
-            question.options = [Option(option_text=text) for text, _ in item["options"]]
+            question.options = [Option(option_text=text) for text in options]
             assessment.questions.append(question)
 
         db.add(assessment)

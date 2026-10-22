@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Card, ErrorBox, Input, Label, List, PageHeader, ProgressBar, Spinner, Tag } from "@/components/ui";
+import { AiLoader, Button, Card, EmptyState, ErrorBox, Input, Label, List, PageHeader, ScoreRing, Spinner, Tag } from "@/components/ui";
 import { api, type SkillGapReport } from "@/lib/api";
 
 const PRIORITY_TONE = { high: "red", medium: "amber", low: "slate" } as const;
@@ -48,7 +48,7 @@ export default function SkillGapPage() {
 
   return (
     <>
-      <PageHeader title="Skill Gap Analysis" subtitle="Compare your skills with what a target role needs." />
+      <PageHeader icon="📈" title="Skill Gap Analysis" subtitle="Compare your skills with what a target role needs." />
 
       <Card>
         <form onSubmit={analyze} className="space-y-4">
@@ -63,12 +63,18 @@ export default function SkillGapPage() {
           </div>
           <ErrorBox message={error} />
           <Button type="submit" disabled={analyzing}>
-            {analyzing ? "Analysing (can take ~20s)..." : "Analyse skill gap"}
+            {analyzing ? "Analysing..." : "🔍 Analyse skill gap"}
           </Button>
         </form>
       </Card>
 
+      {analyzing && <div className="mt-6"><AiLoader title="Comparing your skills with the role" /></div>}
       {loading && <div className="mt-6"><Spinner /></div>}
+      {!loading && !analyzing && reports.length === 0 && (
+        <div className="mt-6">
+          <EmptyState icon="🧭" title="No analysis yet" text="Enter a target role to see how ready you are and what to learn next." />
+        </div>
+      )}
 
       {reports.length > 1 && (
         <div className="mt-6 flex flex-wrap gap-2">
@@ -77,7 +83,7 @@ export default function SkillGapPage() {
               key={r.id}
               onClick={() => setSelected(r)}
               className={`rounded-full border px-3 py-1 text-sm ${
-                selected?.id === r.id ? "border-indigo-600 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-600"
+                selected?.id === r.id ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:border-indigo-300"
               }`}
             >
               {r.target_role}
@@ -88,13 +94,15 @@ export default function SkillGapPage() {
 
       {selected && (
         <div className="mt-6 space-y-4">
-          <Card>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">{selected.target_role}</h2>
-              <span className="text-2xl font-bold text-indigo-600">{selected.content.readiness_score}%</span>
+          <Card className="animate-fade-up">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+              <ScoreRing value={selected.content.readiness_score} size={112} label="ready" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Target role</p>
+                <h2 className="text-xl font-bold text-slate-900">{selected.target_role}</h2>
+                <p className="mt-2 text-sm text-slate-600">{selected.content.summary}</p>
+              </div>
             </div>
-            <div className="mt-2"><ProgressBar value={selected.content.readiness_score} /></div>
-            <p className="mt-3 text-sm text-slate-600">{selected.content.summary}</p>
             {selected.content.matching_skills.length > 0 && (
               <div className="mt-4">
                 <p className="mb-2 text-xs font-semibold uppercase text-slate-500">Skills you already have</p>
@@ -108,7 +116,7 @@ export default function SkillGapPage() {
           </Card>
 
           <Card>
-            <h3 className="font-semibold text-slate-900">Skills to learn</h3>
+            <h3 className="font-semibold text-slate-900">🎯 Skills to learn</h3>
             <div className="mt-3 divide-y divide-slate-100">
               {selected.content.missing_skills.map((m) => (
                 <div key={m.skill} className="py-3">
@@ -127,7 +135,7 @@ export default function SkillGapPage() {
           </Card>
 
           <Card>
-            <h3 className="mb-2 font-semibold text-slate-900">Next steps</h3>
+            <h3 className="mb-2 font-semibold text-slate-900">🚀 Next steps</h3>
             <List items={selected.content.next_steps} />
           </Card>
         </div>

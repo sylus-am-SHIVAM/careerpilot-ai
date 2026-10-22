@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Card, ErrorBox, Input, Label, List, PageHeader, Spinner, Tag } from "@/components/ui";
+import { AiLoader, Button, Card, EmptyState, ErrorBox, Input, Label, List, PageHeader, ScoreRing, Spinner, Tag } from "@/components/ui";
 import { ApiError, api, type ResumeData } from "@/lib/api";
 
 export default function ResumePage() {
@@ -53,18 +53,23 @@ export default function ResumePage() {
 
   return (
     <>
-      <PageHeader title="Resume Review" subtitle="Upload your resume (PDF) to get an AI review and suggestions." />
+      <PageHeader icon="📄" title="Resume Review" subtitle="Upload your resume (PDF) to get an AI review and suggestions." />
 
       <Card>
         <form onSubmit={upload} className="space-y-4">
           <div>
             <Label>Resume PDF (max 5 MB)</Label>
-            <input
-              type="file"
-              accept="application/pdf,.pdf"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-indigo-700"
-            />
+            <label className="flex cursor-pointer flex-col items-center rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50/40 px-4 py-8 text-center transition hover:border-indigo-400 hover:bg-indigo-50">
+              <span className="text-3xl">{file ? "✅" : "📤"}</span>
+              <span className="mt-2 text-sm font-semibold text-slate-800">{file ? file.name : "Click to choose your resume PDF"}</span>
+              <span className="text-xs text-slate-500">{file ? `${(file.size / 1024).toFixed(0)} KB` : "Text-based PDF works best"}</span>
+              <input
+                type="file"
+                accept="application/pdf,.pdf"
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                className="sr-only"
+              />
+            </label>
           </div>
           <div>
             <Label>Target role (optional)</Label>
@@ -73,28 +78,32 @@ export default function ResumePage() {
           <ErrorBox message={error} />
           <div className="flex gap-2">
             <Button type="submit" disabled={!file || uploading}>
-              {uploading ? "Analysing (can take ~30s)..." : resume ? "Upload new version" : "Upload & analyse"}
+              {uploading ? "Analysing..." : resume ? "⬆️ Upload new version" : "✨ Upload & analyse"}
             </Button>
             {resume && <Button type="button" variant="danger" onClick={remove}>Delete</Button>}
           </div>
         </form>
       </Card>
 
+      {uploading && <div className="mt-6"><AiLoader title="Reading and reviewing your resume" /></div>}
       {loading && <div className="mt-6"><Spinner /></div>}
+      {!loading && !uploading && !resume && (
+        <div className="mt-6">
+          <EmptyState icon="📝" title="No resume yet" text="Upload your resume to get a score, strengths, improvements and ATS tips." />
+        </div>
+      )}
 
       {resume && a && (
         <div className="mt-6 space-y-4">
-          <Card>
-            <div className="flex flex-wrap items-start justify-between gap-4">
+          <Card className="animate-fade-up">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+              <ScoreRing value={a.overall_score} size={112} label="/ 100" />
               <div>
                 <p className="text-sm text-slate-500">{resume.filename}{resume.target_role ? ` · for ${resume.target_role}` : ""}</p>
                 <p className="mt-1"><Tag tone="indigo">{a.experience_level}</Tag></p>
+                <p className="mt-2 text-sm text-slate-600">{a.summary}</p>
               </div>
-              <p className="text-4xl font-bold text-slate-900">
-                {a.overall_score}<span className="text-base font-normal text-slate-400">/100</span>
-              </p>
             </div>
-            <p className="mt-3 text-sm text-slate-600">{a.summary}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               {a.extracted_skills.map((s) => (
                 <Tag key={s}>{s}</Tag>
@@ -104,17 +113,17 @@ export default function ResumePage() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
-              <h3 className="mb-2 font-semibold text-green-700">Strengths</h3>
+              <h3 className="mb-2 font-semibold text-emerald-700">💪 Strengths</h3>
               <List items={a.strengths} />
             </Card>
             <Card>
-              <h3 className="mb-2 font-semibold text-amber-700">Improvements</h3>
+              <h3 className="mb-2 font-semibold text-amber-700">🛠️ Improvements</h3>
               <List items={a.improvements} />
             </Card>
           </div>
 
           <Card>
-            <h3 className="mb-3 font-semibold text-slate-900">Section feedback</h3>
+            <h3 className="mb-3 font-semibold text-slate-900">🧾 Section feedback</h3>
             <div className="space-y-3">
               {a.section_feedback.map((s) => (
                 <div key={s.section}>
@@ -127,11 +136,11 @@ export default function ResumePage() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
-              <h3 className="mb-2 font-semibold text-slate-900">ATS tips</h3>
+              <h3 className="mb-2 font-semibold text-slate-900">🤖 ATS tips</h3>
               <List items={a.ats_tips} />
             </Card>
             <Card>
-              <h3 className="mb-2 font-semibold text-slate-900">Suggested roles</h3>
+              <h3 className="mb-2 font-semibold text-slate-900">🎯 Suggested roles</h3>
               <div className="flex flex-wrap gap-2">
                 {a.suggested_roles.map((r) => (
                   <Tag key={r} tone="indigo">{r}</Tag>
