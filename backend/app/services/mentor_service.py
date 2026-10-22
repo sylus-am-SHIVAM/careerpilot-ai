@@ -5,9 +5,11 @@ from app.models.assessment import Question, UserAnswer
 from app.models.chat import ChatMessage
 from app.models.user import User
 from app.services.career_service import get_recommendation
+from app.services.rag_service import search_knowledge
 from app.utils.llm import generate_text
 
 HISTORY_LIMIT = 10
+RELEVANCE_THRESHOLD = 0.5
 
 MENTOR_PROMPT = """You are CareerPilot AI, a friendly and practical career mentor for students in India.
 Give clear, honest, actionable guidance: suggest concrete skills, resources, projects and next steps.
@@ -65,7 +67,22 @@ def get_chat_history(db: Session, user_id: int, limit: int = 50):
     return list(reversed(messages))
 
 
-def chat_with_mentor(db: Session, user: User, message: str, context: str = ""):
+def retrieve_context(message: str):
+    try:
+        results = search_knowledge(message)
+    except HTTPException:
+        return "", []
+
+    relevant = [r for r in results if r["distance"] <= RELEVANCE_THRESHOLD]
+    context = "\n\n".join(r["text"] for r in relevant)
+    sources = [f'{r["source"]}: {r["section"]}' for r in relevant]
+
+    return context, sources
+
+
+def chat_with_mentor(db: Session, user: User, message: str):
+    context, sources = retrieve_context(message)
+
     contents = []
     for past in get_chat_history(db, user.id, HISTORY_LIMIT):
         contents.append({"role": "user", "parts": [{"text": past.message}]})
@@ -83,4 +100,4 @@ def chat_with_mentor(db: Session, user: User, message: str, context: str = ""):
     db.commit()
     db.refresh(chat)
 
-    return chat
+    return chat, sources

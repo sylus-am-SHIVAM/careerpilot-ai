@@ -15,3 +15,7 @@ class ChatResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ChatReply(ChatResponse):
+    sources: list[str] = []

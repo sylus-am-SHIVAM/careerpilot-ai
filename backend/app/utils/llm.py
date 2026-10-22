@@ -69,7 +69,7 @@ def generate_text(system_prompt: str, contents, temperature: float = 0.7):
     return response.text or ""
 
 
-def generate_json(system_prompt: str, prompt: str):
+def generate_json(system_prompt: str, prompt: str, schema=None):
     response = call_gemini(
         lambda client: client.models.generate_content(
             model=GEMINI_MODEL,
@@ -77,25 +77,28 @@ def generate_json(system_prompt: str, prompt: str):
             config=types.GenerateContentConfig(
                 system_instruction=system_prompt,
                 temperature=0.4,
-                response_mime_type="application/json"
+                response_mime_type="application/json",
+                response_schema=schema
             )
         )
     )
 
     try:
-        return json.loads(response.text)
-    except (TypeError, json.JSONDecodeError):
+        data = json.loads(response.text)
+        return schema.model_validate(data).model_dump() if schema else data
+    except (TypeError, ValueError):
         raise HTTPException(
             status_code=502,
             detail="AI service returned invalid JSON"
         )
 
 
-def embed_texts(texts: list[str]):
+def embed_texts(texts: list[str], task_type: str | None = None):
     response = call_gemini(
         lambda client: client.models.embed_content(
             model=GEMINI_EMBEDDING_MODEL,
-            contents=texts
+            contents=texts,
+            config=types.EmbedContentConfig(task_type=task_type)
         )
     )
 

@@ -2,10 +2,12 @@ from fastapi import FastAPI
 from app.api.routes import router
 from app.api.assessment_routes import router as assessment_router
 from app.api.chat_routes import router as chat_router
+from app.api.planner_routes import router as planner_router
 from app.database.database import engine, Base
 from app.models.user import User
 from app.models.assessment import Assessment, Question, Option, UserAnswer
 from app.models.chat import ChatMessage
+from app.models.career_plan import Roadmap, SkillGapReport
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -21,3 +23,4 @@ app = FastAPI(
 app.include_router(router)
 app.include_router(assessment_router)
 app.include_router(chat_router)
+app.include_router(planner_router)
