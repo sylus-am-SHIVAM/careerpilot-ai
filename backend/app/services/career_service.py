@@ -1,7 +1,8 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.models.assessment import Question, UserAnswer
+from app.data.career_assessment import OPTION_CATEGORIES
+from app.models.assessment import Option, Question, UserAnswer
 from app.services.assessment_service import get_assessment
 
 
@@ -33,32 +34,6 @@ CAREER_CATEGORIES = {
     },
 }
 
-# Scoring rules for "Career Interest Assessment" (assessment 1), agreed with Shivam on 22 Oct 2026.
-# Each selected option gives 1 point to every category listed. Option 8 ("mix") scores nothing.
-OPTION_CATEGORIES = {
-    1: ["technology"],
-    2: ["social"],
-    3: ["creative"],
-    4: ["business"],
-    5: ["technology", "research"],
-    6: ["social"],
-    7: ["business"],
-    8: [],
-    9: ["technology"],
-    10: ["research"],
-    11: ["business"],
-    12: ["creative"],
-    13: ["technology"],
-    14: ["research"],
-    15: ["social"],
-    16: ["creative"],
-    17: ["technology"],
-    18: ["social"],
-    19: ["creative"],
-    20: ["business"],
-}
-
-
 def get_recommendation(db: Session, assessment_id: int, user_id: int):
     if not get_assessment(db, assessment_id):
         raise HTTPException(
@@ -73,8 +48,9 @@ def get_recommendation(db: Session, assessment_id: int, user_id: int):
     )
 
     answers = (
-        db.query(UserAnswer)
+        db.query(UserAnswer.question_id, Option.option_text)
         .join(Question, UserAnswer.question_id == Question.id)
+        .join(Option, UserAnswer.option_id == Option.id)
         .filter(
             UserAnswer.user_id == user_id,
             Question.assessment_id == assessment_id
@@ -90,7 +66,7 @@ def get_recommendation(db: Session, assessment_id: int, user_id: int):
 
     scores = {key: 0 for key in CAREER_CATEGORIES}
     for answer in answers:
-        for key in OPTION_CATEGORIES.get(answer.option_id, []):
+        for key in OPTION_CATEGORIES.get(answer.option_text.strip().lower(), []):
             scores[key] += 1
 
     total_points = sum(scores.values())

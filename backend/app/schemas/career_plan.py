@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class RoadmapRequest(BaseModel):
@@ -33,8 +33,7 @@ class RoadmapResponse(BaseModel):
     content: RoadmapContent
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SkillGapRequest(BaseModel):
@@ -64,5 +63,4 @@ class SkillGapResponse(BaseModel):
     content: SkillGapContent
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

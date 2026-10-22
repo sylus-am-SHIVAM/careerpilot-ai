@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 
@@ -14,8 +14,7 @@ class AssessmentCreate(AssessmentBase):
 class AssessmentResponse(AssessmentBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 class OptionBase(BaseModel):
     option_text: str
 
@@ -27,8 +26,7 @@ class OptionCreate(OptionBase):
 class OptionResponse(OptionBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class QuestionBase(BaseModel):
@@ -44,8 +42,7 @@ class QuestionResponse(QuestionBase):
     assessment_id: int
     options: list[OptionResponse]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserAnswerCreate(BaseModel):
@@ -59,8 +56,7 @@ class UserAnswerResponse(BaseModel):
     question_id: int
     option_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
         
 
 class AssessmentResultResponse(BaseModel):

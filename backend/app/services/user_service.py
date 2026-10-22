@@ -4,7 +4,9 @@ from app.utils.security import verify_password, create_access_token, hash_passwo
 # from app.utils.security import hash_password 
 from sqlalchemy.orm import Session
 
+from app.models.assessment import UserAnswer
 from app.models.user import User
+from app.services.resume_service import delete_resume_file, get_resume
 from app.schemas.user import UserCreate
 # def create_user(db: Session, user: UserCreate):
 #     db_user = User(
@@ -61,6 +63,10 @@ def delete_user(db: Session, user_id: int):
     db_user = db.query(User).filter(User.id == user_id).first()
 
     if db_user:
+        resume = get_resume(db, user_id)
+        if resume:
+            delete_resume_file(resume)
+        db.query(UserAnswer).filter(UserAnswer.user_id == user_id).delete()
         db.delete(db_user)
         db.commit()
 

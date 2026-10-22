@@ -1,5 +1,7 @@
 # API Design
 
+> Early design notes. The implemented API is documented in the root README and in Swagger at `/docs`.
+
 ## Authentication
 
 POST /register

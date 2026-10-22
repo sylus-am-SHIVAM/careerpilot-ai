@@ -11,6 +11,7 @@ from app.utils.llm import generate_text
 
 HISTORY_LIMIT = 10
 RELEVANCE_THRESHOLD = 0.5
+RELEVANCE_MARGIN = 0.08
 
 MENTOR_PROMPT = """You are CareerPilot AI, a friendly and practical career mentor for students in India.
 Give clear, honest, actionable guidance: suggest concrete skills, resources, projects and next steps.
@@ -83,7 +84,11 @@ def retrieve_context(message: str):
     except HTTPException:
         return "", []
 
-    relevant = [r for r in results if r["distance"] <= RELEVANCE_THRESHOLD]
+    best = min((r["distance"] for r in results), default=1)
+    relevant = [
+        r for r in results
+        if r["distance"] <= RELEVANCE_THRESHOLD and r["distance"] - best <= RELEVANCE_MARGIN
+    ]
     context = "\n\n".join(r["text"] for r in relevant)
     sources = [f'{r["source"]}: {r["section"]}' for r in relevant]
 
