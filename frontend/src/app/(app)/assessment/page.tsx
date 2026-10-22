@@ -113,6 +113,21 @@ export default function AssessmentPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [view, questions, current, answers, choose]);
 
+  const retake = useCallback(async () => {
+    if (!assessment) return;
+    setError(null);
+    try {
+      await api(`/assessments/${assessment.id}/answers`, { method: "DELETE" });
+      setAnswers({});
+      setRecommendation(null);
+      setCurrent(0);
+      setView("intro");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not reset your answers");
+    }
+  }, [assessment]);
+
   if (loading) return <Spinner />;
   if (!assessment) return <ErrorBox message={error ?? "No assessment is available yet."} />;
 
@@ -149,7 +164,19 @@ export default function AssessmentPage() {
   }
 
   if (view === "result" && recommendation) {
-    return <ResultView recommendation={recommendation} onRetake={() => { setCurrent(0); setView("quiz"); }} />;
+    return (
+      <>
+        <ErrorBox message={error} />
+        <ResultView
+          recommendation={recommendation}
+          onEdit={() => {
+            setCurrent(0);
+            setView("quiz");
+          }}
+          onRetake={retake}
+        />
+      </>
+    );
   }
 
   const question = questions[current];
@@ -248,7 +275,17 @@ export default function AssessmentPage() {
   );
 }
 
-function ResultView({ recommendation, onRetake }: { recommendation: Recommendation; onRetake: () => void }) {
+function ResultView({
+  recommendation,
+  onEdit,
+  onRetake,
+}: {
+  recommendation: Recommendation;
+  onEdit: () => void;
+  onRetake: () => Promise<void>;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const top = recommendation.top_categories[0];
   const style = CATEGORY_STYLE[top.key] ?? CATEGORY_STYLE.technology;
   const strength = STRENGTH_TEXT[recommendation.match_strength];
@@ -267,8 +304,37 @@ function ResultView({ recommendation, onRetake }: { recommendation: Recommendati
             <p className="mt-1 text-white/85">{top.description}</p>
           </div>
         </div>
-        <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-sm">
-          <strong>{strength.label}</strong> · {strength.text}
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-sm">
+            <strong>{strength.label}</strong> · {strength.text}
+          </div>
+          {!confirming ? (
+            <button
+              onClick={() => setConfirming(true)}
+              className="rounded-full bg-white px-4 py-1.5 text-sm font-semibold text-slate-800 shadow hover:bg-slate-100"
+            >
+              🔄 Retake test
+            </button>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-white px-3 py-2 text-sm text-slate-800 shadow animate-fade-up">
+              <span>Clear all 20 answers and start again?</span>
+              <button
+                disabled={resetting}
+                onClick={async () => {
+                  setResetting(true);
+                  await onRetake();
+                  setResetting(false);
+                  setConfirming(false);
+                }}
+                className="rounded-lg bg-indigo-600 px-3 py-1 font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {resetting ? "Clearing..." : "Yes, retake"}
+              </button>
+              <button onClick={() => setConfirming(false)} className="rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100">
+                Cancel
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -349,8 +415,8 @@ function ResultView({ recommendation, onRetake }: { recommendation: Recommendati
           {top.careers.map((c) => (
             <Tag key={c} tone="indigo">{c}</Tag>
           ))}
-          <button onClick={onRetake} className="ml-auto text-sm font-medium text-slate-500 hover:text-indigo-600">
-            ↺ Retake / change answers
+          <button onClick={onEdit} className="ml-auto text-sm font-medium text-slate-500 hover:text-indigo-600">
+            ✏️ Change a few answers
           </button>
         </div>
       </Card>

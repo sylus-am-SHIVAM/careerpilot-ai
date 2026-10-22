@@ -54,7 +54,7 @@ def create_new_user(
     if get_user_by_email(db, user.email):
         raise HTTPException(
             status_code=400,
-            detail="Email already registered"
+            detail="Email already registered. Please log in instead."
         )
 
     return create_user(db, user)
@@ -135,12 +135,18 @@ def login(
         password=form_data.password
     )
 
+    if not get_user_by_email(db, login_data.email):
+        raise HTTPException(
+            status_code=404,
+            detail="No account found with this email. Please sign up first."
+        )
+
     result = login_user(db, login_data)
 
     if not result:
         raise HTTPException(
             status_code=401,
-            detail="Invalid email or password"
+            detail="Incorrect password. Please try again."
         )
 
     return result

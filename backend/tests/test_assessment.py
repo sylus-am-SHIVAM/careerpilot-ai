@@ -101,3 +101,20 @@ def test_answers_are_per_user(client, auth):
     answer(client, headers, questions(client)[0], 1)
     assert len(client.get("/api/v1/assessments/1/answers", headers=headers).json()) == 1
     assert client.get("/api/v1/assessments/1/answers", headers=other_headers).json() == []
+
+
+def test_retake_clears_only_my_answers(client, auth):
+    _, headers = auth
+    _, other_headers = register(client, email="other@example.com")
+    qs = questions(client)
+    for q in qs[:3]:
+        answer(client, headers, q, 0)
+    answer(client, other_headers, qs[0], 1)
+
+    response = client.delete("/api/v1/assessments/1/answers", headers=headers)
+    assert response.status_code == 200
+    assert response.json()["deleted"] == 3
+    assert client.get("/api/v1/assessments/1/answers", headers=headers).json() == []
+    assert len(client.get("/api/v1/assessments/1/answers", headers=other_headers).json()) == 1
+    assert client.delete("/api/v1/assessments/999/answers", headers=headers).status_code == 404
+    assert client.delete("/api/v1/assessments/1/answers").status_code == 401

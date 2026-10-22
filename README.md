@@ -101,13 +101,14 @@ Tests run against a temporary SQLite database with Gemini and ChromaDB mocked, s
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | POST | `/users` | – | Register |
-| POST | `/login` | – | Get JWT (form fields `username`=email, `password`) |
+| POST | `/login` | – | Get JWT (form fields `username`=email, `password`); 404 if no account, 401 if wrong password |
 | GET | `/me` | ✅ | Current user |
 | GET/PUT/DELETE | `/users/{id}` | ✅ | Get user / update or delete own account |
 | GET | `/assessments/` | – | List assessments |
 | GET | `/assessments/{id}/questions` | – | Questions with options |
 | POST | `/assessments/answers` | ✅ | Save (or change) an answer |
 | GET | `/assessments/{id}/answers` | ✅ | My answers |
+| DELETE | `/assessments/{id}/answers` | ✅ | Clear my answers to retake the assessment |
 | GET | `/assessments/{id}/result` | ✅ | Completion progress |
 | GET | `/assessments/{id}/recommendation` | ✅ | Career category scores and top careers |
 | POST | `/chat` | ✅ | Ask the AI mentor |

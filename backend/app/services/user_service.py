@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from app.schemas.login import LoginRequest
 from app.utils.security import verify_password, create_access_token, hash_password
 
@@ -24,7 +25,7 @@ from app.schemas.user import UserCreate
 def create_user(db: Session, user: UserCreate):
     db_user = User(
         full_name=user.full_name,
-        email=user.email,
+        email=user.email.strip().lower(),
         password=hash_password(user.password)
     )
 
@@ -34,7 +35,11 @@ def create_user(db: Session, user: UserCreate):
 
     return db_user
 def get_user_by_email(db: Session, email: str):
-    return db.query(User).filter(User.email == email).first()
+    return (
+        db.query(User)
+        .filter(func.lower(User.email) == email.strip().lower())
+        .first()
+    )
 
 
 def get_users(db: Session):
@@ -73,7 +78,7 @@ def delete_user(db: Session, user_id: int):
     return db_user
 
 def login_user(db, login_data: LoginRequest):
-    user = db.query(User).filter(User.email == login_data.email).first()
+    user = get_user_by_email(db, login_data.email)
 
     if not user:
         return None

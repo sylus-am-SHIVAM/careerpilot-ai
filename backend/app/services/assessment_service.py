@@ -216,3 +216,26 @@ def get_user_answers(
         )
         .all()
     )
+
+
+def reset_user_answers(
+    db: Session,
+    assessment_id: int,
+    user_id: int
+):
+    question_ids = (
+        db.query(Question.id)
+        .filter(Question.assessment_id == assessment_id)
+    )
+
+    deleted = (
+        db.query(UserAnswer)
+        .filter(
+            UserAnswer.user_id == user_id,
+            UserAnswer.question_id.in_(question_ids)
+        )
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+
+    return deleted

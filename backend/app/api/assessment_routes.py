@@ -28,7 +28,8 @@ from app.services.assessment_service import (
     get_questions,
     create_user_answer,
     get_assessment_result,
-    get_user_answers
+    get_user_answers,
+    reset_user_answers
 )
 
 router = APIRouter(
@@ -122,6 +123,23 @@ def get_my_answers(
         assessment_id,
         current_user.id
     )
+
+
+@router.delete("/{assessment_id}/answers")
+def retake_assessment(
+    assessment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not get_assessment(db, assessment_id):
+        raise HTTPException(
+            status_code=404,
+            detail="Assessment not found"
+        )
+
+    deleted = reset_user_answers(db, assessment_id, current_user.id)
+
+    return {"message": "Your answers were cleared. You can retake the assessment.", "deleted": deleted}
 
 
 @router.get(

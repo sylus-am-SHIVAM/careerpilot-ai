@@ -20,6 +20,14 @@ def test_duplicate_email_rejected(client, auth):
 def test_wrong_password_rejected(client, auth):
     response = client.post("/api/v1/login", data={"username": "student@example.com", "password": "wrong"})
     assert response.status_code == 401
+    assert response.json()["detail"] == "Incorrect password. Please try again."
+
+    unknown = client.post("/api/v1/login", data={"username": "nobody@example.com", "password": "secret123"})
+    assert unknown.status_code == 404
+    assert "sign up" in unknown.json()["detail"]
+
+    mixed_case = client.post("/api/v1/login", data={"username": "Student@Example.com", "password": "secret123"})
+    assert mixed_case.status_code == 200
 
 
 def test_protected_routes_need_token(client):

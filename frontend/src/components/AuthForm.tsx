@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { Button, Card, ErrorBox, Input, Label } from "./ui";
 
@@ -13,11 +14,13 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [suggest, setSuggest] = useState<"login" | "register" | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
+    setSuggest(null);
     setBusy(true);
     try {
       if (mode === "login") await login(email, password);
@@ -25,6 +28,8 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
       router.replace("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
+      if (err instanceof ApiError && mode === "login" && err.status === 404) setSuggest("register");
+      if (err instanceof ApiError && mode === "register" && err.status === 400) setSuggest("login");
     } finally {
       setBusy(false);
     }
@@ -66,6 +71,14 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
             />
           </div>
           <ErrorBox message={error} />
+          {suggest && (
+            <Link
+              href={suggest === "register" ? "/register" : "/login"}
+              className="block rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2.5 text-center text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
+            >
+              {suggest === "register" ? "✨ Create a free account →" : "🔑 Go to log in →"}
+            </Link>
+          )}
           <Button type="submit" disabled={busy} className="w-full">
             {busy ? "Please wait..." : isLogin ? "Log in" : "Sign up"}
           </Button>
