@@ -69,3 +69,26 @@ class AssessmentResultResponse(BaseModel):
     total_questions: int
     answered_questions: int
     completion_percentage: float
+
+
+class CareerCategory(BaseModel):
+    key: str
+    name: str
+    description: str
+    careers: list[str]
+
+
+class CategoryScore(BaseModel):
+    key: str
+    name: str
+    score: int
+    percentage: float
+
+
+class RecommendationResponse(BaseModel):
+    assessment_id: int
+    user_id: int
+    answered_questions: int
+    total_questions: int
+    top_categories: list[CareerCategory]
+    scores: list[CategoryScore]

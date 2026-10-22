@@ -16,8 +16,10 @@ from app.schemas.assessment import (
     UserAnswerCreate,
 
     UserAnswerResponse,
-    AssessmentResultResponse
+    AssessmentResultResponse,
+    RecommendationResponse
 )
+from app.services.career_service import get_recommendation
 from app.services.assessment_service import (
     create_assessment,
     get_assessments,
@@ -127,3 +129,19 @@ def get_result(
         )
 
     return result
+
+
+@router.get(
+    "/{assessment_id}/recommendation",
+    response_model=RecommendationResponse
+)
+def get_career_recommendation(
+    assessment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    return get_recommendation(
+        db,
+        assessment_id,
+        current_user.id
+    )
