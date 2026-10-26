@@ -118,3 +118,22 @@ def test_retake_clears_only_my_answers(client, auth):
     assert len(client.get("/api/v1/assessments/1/answers", headers=other_headers).json()) == 1
     assert client.delete("/api/v1/assessments/999/answers", headers=headers).status_code == 404
     assert client.delete("/api/v1/assessments/1/answers").status_code == 401
+
+
+def test_only_admins_can_create_assessments(client, auth, monkeypatch):
+    _, headers = auth
+    body = {"title": "Hijack", "description": "x"}
+    assert client.post("/api/v1/assessments/", json=body).status_code == 401
+    assert client.post("/api/v1/assessments/", json=body, headers=headers).status_code == 403
+    question = {"question_text": "Q?", "options": [{"option_text": "A"}]}
+    assert client.post("/api/v1/assessments/1/questions", json=question, headers=headers).status_code == 403
+
+    monkeypatch.setenv("ADMIN_EMAILS", "Student@Example.com")
+    assert client.post("/api/v1/assessments/", json=body, headers=headers).status_code == 200
+
+
+def test_startup_seeds_assessment_once(client):
+    with client:
+        with client:
+            pass
+    assert len(client.get("/api/v1/assessments/").json()) == 1

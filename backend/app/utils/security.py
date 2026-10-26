@@ -84,3 +84,19 @@ def get_current_user(
         )
 
     return user
+
+
+def get_admin_user(current_user: User = Depends(get_current_user)):
+    admin_emails = {
+        email.strip().lower()
+        for email in os.getenv("ADMIN_EMAILS", "").split(",")
+        if email.strip()
+    }
+
+    if current_user.email.lower() not in admin_emails:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins can change assessments"
+        )
+
+    return current_user

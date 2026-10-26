@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,7 +16,16 @@ from app.models.career_plan import Roadmap, SkillGapReport
 from app.models.resume import Resume
 Base.metadata.create_all(bind=engine)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from app.seed import seed_assessment
+    seed_assessment()
+    yield
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="CareerPilot AI",
     description="An AI-powered career guidance platform that provides personalized career recommendations, learning roadmaps, resume analysis, and AI mentorship using LLMs and RAG.",
     version="0.1.0",

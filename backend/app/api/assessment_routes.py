@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.models.user import User
-from app.utils.security import get_current_user
+from app.utils.security import get_admin_user, get_current_user
 from app.schemas.assessment import (
     AssessmentCreate,
     AssessmentResponse,
@@ -41,7 +41,8 @@ router = APIRouter(
 @router.post("/", response_model=AssessmentResponse)
 def create_new_assessment(
     assessment: AssessmentCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_admin_user)
 ):
     return create_assessment(db, assessment)
 
@@ -59,7 +60,8 @@ def get_all_assessments(
 def create_new_question(
     assessment_id: int,
     question: QuestionCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_admin_user)
 ):
     result = create_question(
         db,
